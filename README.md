@@ -19,7 +19,7 @@ Toate posturile de știri (Digi24, Antena 3 CNN, Euronews România, Știrile Pro
 
 Deschide apoi `http://localhost:8765` în browser.
 
-Fără server, pagina merge în mod static (folosește `channels.baked.json`), dar fără detectare live în timp real. Posturile cu stream HLS (Antena 3, România TV) au nevoie de server pentru proxy-ul `/api/hls`.
+Fără server, pagina merge în mod static pe baza fișierului `channels.baked.json` (generat automat de server, ignorat de git), dar fără detectare live în timp real. Posturile cu stream HLS (Antena 3, România TV) au nevoie de server pentru proxy-ul `/api/hls`.
 
 ## Cum funcționează
 

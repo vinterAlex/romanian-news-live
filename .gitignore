@@ -1,4 +1,5 @@
 node_modules/
+channels.baked.json
 _page_result.png
 *.log
 .DS_Store
