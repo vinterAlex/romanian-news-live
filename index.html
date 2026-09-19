@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>Știri Live România — Multicam</title>
+<style>
+  :root{
+    --bg:#0b0e14;
+    --panel:#11151f;
+    --panel2:#171d2b;
+    --line:#232a3a;
+    --txt:#e6e9f0;
+    --dim:#8b93a7;
+    --accent:#37f0c5;
+    --red:#ff5c5c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    display:flex;flex-direction:column;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(55,240,197,.07), transparent 60%),
+      var(--bg);
+    color:var(--txt);
+    font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    overflow:hidden;
+  }
+  .toolbar{
+    display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+    padding:8px 14px;
+    background:rgba(11,14,20,.9);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+    flex:0 0 auto;
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;letter-spacing:.3px}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--red);box-shadow:0 0 12px var(--red);animation:blink 1.6s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+  .toolbar .spacer{flex:1}
+  .grp{display:flex;align-items:center;gap:8px}
+  .grp label{color:var(--dim);font-size:12px;text-transform:uppercase;letter-spacing:.6px}
+  select,.btn{
+    font:inherit;color:var(--txt);
+    background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+    padding:6px 12px;cursor:pointer;
+  }
+  select:focus,.btn:focus{outline:2px solid var(--accent);outline-offset:1px}
+  .btn:hover{background:#1d2434}
+  .mvol{width:150px;accent-color:var(--accent);cursor:pointer}
+  .sync-chip{
+    font-size:11.5px;color:var(--dim);
+    background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+    padding:5px 10px;white-space:nowrap;
+  }
+  .sync-chip b{color:var(--accent)}
+  .hint{color:var(--dim);font-size:11.5px}
+  .grid{
+    flex:1;min-height:0;
+    display:grid;gap:10px;padding:10px 14px;
+    grid-template-columns:repeat(var(--cols,4),minmax(0,1fr));
+    grid-template-rows:repeat(var(--rows,2),minmax(0,1fr));
+  }
+  .card{
+    position:relative;
+    display:flex;flex-direction:column;
+    min-height:0;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-top:3px solid var(--acc,var(--accent));
+    border-radius:12px;
+    overflow:hidden;
+    transition:transform .15s ease,box-shadow .15s ease,opacity .2s;
+  }
+  .card:hover{box-shadow:0 6px 24px rgba(0,0,0,.45);transform:translateY(-2px)}
+  .card.dimmed{opacity:.3;pointer-events:none}
+  .card.focused{
+    position:fixed;left:50%;top:50%;
+    width:min(94vw,1500px);height:min(92vh,1000px);
+    transform:translate(-50%,-50%);
+    z-index:60;
+    border-width:4px;
+    box-shadow:0 24px 80px rgba(0,0,0,.7);
+  }
+  .card.focused:hover{transform:translate(-50%,-50%)}
+  .card.focused .video{flex:1;min-height:0}
+  body.focusing .grid:not(.focused){filter:blur(2px)}
+  .head{
+    display:flex;align-items:center;gap:8px;
+    padding:6px 9px;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);
+    flex:0 0 auto;
+  }
+  .name{flex:0 1 auto;font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+  .badge{
+    flex:0 0 auto;font-size:9.5px;font-weight:700;letter-spacing:.8px;
+    padding:2px 6px;border-radius:5px;
+    background:#1e2434;color:var(--dim);
+  }
+  .badge.live{background:rgba(255,92,92,.18);color:var(--red)}
+  .badge.live.pale{color:#b46a6a;background:rgba(255,92,92,.08)}
+  .badge.wait{background:rgba(55,240,197,.12);color:var(--accent)}
+  .badge.solo{background:var(--accent);color:#062b22}
+  .badge.off{background:rgba(139,147,167,.12);color:var(--dim)}
+  .head .spacer{flex:1}
+  .icon-btn{
+    flex:0 0 auto;
+    background:none;border:none;color:var(--dim);font-size:13px;
+    width:26px;height:26px;border-radius:6px;cursor:pointer;
+    display:grid;place-items:center;text-decoration:none;
+  }
+  .icon-btn:hover{background:var(--panel2);color:var(--txt)}
+  .icon-btn.muted-on{color:var(--red)}
+  .icon-btn.solo-on{background:var(--accent);color:#062b22}
+  .video{position:relative;flex:1;min-height:0;background:#000}
+  .video iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+  .video video{position:absolute;inset:0;width:100%;height:100%;background:#000;object-fit:contain}
+  .player-host{position:absolute;inset:0;width:100%;height:100%}
+  .overlay{
+    position:absolute;inset:0;z-index:5;
+    display:none;flex-direction:column;gap:10px;
+    align-items:center;justify-content:center;
+    background:rgba(5,7,11,.97);
+    color:var(--dim);font-size:13px;letter-spacing:.4px;
+    text-align:center;padding:12px;
+  }
+  .overlay.show{display:flex}
+  .overlay b{color:var(--txt);display:block;margin-bottom:4px;font-size:14px}
+  .gauges{
+    display:flex;align-items:center;gap:10px;
+    padding:7px 10px;
+    border-top:1px solid var(--line);
+    flex:0 0 auto;
+  }
+  .gauges input[type=range]{flex:1;height:20px;accent-color:var(--accent);cursor:pointer;background:transparent}
+  .pct{font-variant-numeric:tabular-nums;color:var(--dim);font-size:11.5px;min-width:34px;text-align:right}
+  .foot{
+    color:var(--dim);font-size:11.5px;text-align:center;
+    padding:6px 14px;border-top:1px solid var(--line);
+    flex:0 0 auto;
+  }
+  .foot code{color:var(--accent);background:var(--panel2);border-radius:4px;padding:1px 5px}
+  @media (max-width:700px){
+    body{overflow:auto;height:auto;min-height:100%}
+    .grid{flex:none;grid-template-columns:1fr;grid-template-rows:none;grid-auto-rows:minmax(260px,auto)}
+    .video{flex:none;aspect-ratio:16/9}
+    .hint{display:none}
+  }
+</style>
+</head>
+<body>
+<header class="toolbar">
+  <div class="brand"><span class="dot"></span>Știri Live România</div>
+  <div class="spacer"></div>
+
+  <div class="grp">
+    <label for="cols">Coloane</label>
+    <select id="cols">
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4" selected>4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+      <option value="8">8</option>
+    </select>
+  </div>
+
+  <div class="grp">
+    <label for="master">Master</label>
+    <input id="master" class="mvol" type="range" min="0" max="100" value="80">
+    <span id="masterpct" class="pct">80%</span>
+  </div>
+
+  <div class="grp">
+    <button id="unmuteAll" class="btn" type="button" title="Suna la toate posturile">🔊 Toate</button>
+    <button id="muteAll" class="btn" type="button" title="Opreste sunetul la toate">🔇 Toate</button>
+    <button id="unfocus" class="btn" type="button" hidden>✕ Restaur</button>
+  </div>
+
+  <span id="syncChip" class="sync-chip">sincronizare…</span>
+  <span class="hint">dublu-click = focus · ◎ = solo · Esc = exit</span>
+</header>
+
+<main class="grid" id="grid"></main>
+
+<footer class="foot">
+  Fiecare post se pornește automat când e în emisie live · rulează <code>node server.mjs</code> → <code>http://localhost:8765</code>
+</footer>
+
+<script src="hls.min.js"></script>
+<script>
+"use strict";
+const CHANNELS = [
+  { id: "digi24",     name: "Digi24",           channelId: "UCBvKamSrJkwT6ed2BMMZXwg", handle: "@digi24hd56",       color: "#3b82f6" },
+  { id: "antena3",    name: "Antena 3 CNN",     channelId: null,                        handle: "@Antena3CNN",       color: "#f59e0b", external: "https://www.antena3.ro/live" },
+  { id: "euronews",   name: "Euronews România", channelId: "UCbATDExtWstHnwWELZnXNZA", handle: "@euronewsro",       color: "#22c55e" },
+  { id: "protv",      name: "Stirile ProTV",    channelId: "UCEJf5cGtkBdZS8Jh2uSW9xw", handle: "@stirileprotv",     color: "#6366f1" },
+  { id: "romaniatv",  name: "Romania TV",       channelId: null,                        handle: "@RomaniaTV",        color: "#eab308", external: "https://www.romaniatv.net/live" },
+  { id: "aleph",      name: "Aleph News",       channelId: "UC9OlWHkFGBz08r7OXwqx3Sg", handle: "@alephnewsofficial",color: "#14b8a6" },
+  { id: "realitatea", name: "Realitatea Plus",  channelId: "UCO4RZJR_9WZmS-qRA3tMMTg", handle: "@realitatea",       color: "#f97316", external: "https://www.realitatea.net/live" },
+];
+
+const STORE_KEY = "roNewsLive:v2";
+const POLL_MS = 60000;          // cât de des interogăm serverul
+const RECHECK_MS = 30000;       // reîncercare după eroare/terminare stream
+const STUCK_MS = 120000;        // cât așteptăm un stream blocat înainte de restart
+const START_TIMEOUT_MS = 15000; // cât așteptăm "playing" după ready înainte de fallback
+const MAX_FAILS = 3;            // câte încercări eșuate înainte de a renunța (link extern)
+
+const grid = document.getElementById("grid");
+const masterEl = document.getElementById("master");
+const masterPct = document.getElementById("masterpct");
+const syncChip = document.getElementById("syncChip");
+
+const players = new Map();      // idx -> YT.Player
+const meta = [];                // idx -> {solo,vid,status,token,attached,waitStart}
+const store = loadStore();
+const retryTimers = new Map();  // idx -> timeout id
+const recoveryTimers = new Map(); // idx -> timeout id
+let apiReady = false;
+
+// diagnostic: ultimele evenimente de player (util pentru debugging)
+const dbg = (window.__dbg = { events: [] });
+function dbgLog(idx, type, data){
+  dbg.events.push({ t: Date.now(), idx, type, data });
+  if(dbg.events.length > 300) dbg.events.shift();
+}
+
+function loadStore(){
+  try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
+  catch(e){ return {}; }
+}
+function saveStore(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }catch(e){}
+}
+function seedStore(name){
+  const g = store[name];
+  if(!g){ store[name] = { volume: 55, muted: true }; saveStore(); }
+  return store[name];
+}
+function masterScaled(master, gain){
+  return Math.max(0, Math.min(100, Math.round(gain * master / 100)));
+}
+function anySolo(){
+  return meta.some((m) => !!m.solo);
+}
+
+function markMuted(card, muted){
+  const btn = card.querySelector(".mute");
+  btn.textContent = muted ? "🔇" : "🔊";
+  btn.classList.toggle("muted-on", muted);
+}
+
+function renderBadge(card){
+  const idx = +card.dataset.idx;
+  const m = meta[idx];
+  const g = store[CHANNELS[idx].name];
+  const badge = card.querySelector(".badge");
+  if(m.solo){
+    badge.className = "badge solo";
+    badge.textContent = "SOLO";
+    return;
+  }
+  if(m.status === "live"){
+    badge.className = "badge live" + (g.muted ? " pale" : "");
+    badge.textContent = "● LIVE";
+    return;
+  }
+  if(m.status === "blocked" || m.status === "unavailable"){
+    badge.className = "badge live pale";
+    badge.textContent = "live ↗ (extern)";
+    return;
+  }
+  if(m.status === "waiting"){
+    badge.className = "badge wait";
+    badge.textContent = "pornire…";
+    return;
+  }
+  badge.className = "badge off";
+  badge.textContent = "Off air";
+}
+
+function setChannelState(idx, status){
+  const m = meta[idx];
+  const card = grid.children[idx];
+  if(!m || !card) return;
+  m.status = status;
+  const overlay = card.querySelector(".overlay");
+  const msg = overlay.querySelector("div");
+  const btn = overlay.querySelector(".btn");
+  if(status === "off"){
+    overlay.classList.add("show");
+    msg.innerHTML = "<b>Off air — nu e live acum</b>Se pornește singur când stația iese în emisie.";
+    btn.textContent = "Sincronizează acum";
+    btn.__open = null;
+  }else if(status === "blocked" || status === "unavailable"){
+    overlay.classList.add("show");
+    msg.innerHTML = "<b>Emisia e live — dar nu poate fi redată în pagină</b>Deschide sursa direct:";
+    btn.textContent = "Deschide sursa ↗";
+    btn.__open = m.vid ? ("https://www.youtube.com/watch?v=" + m.vid) : (m.external || "https://www.youtube.com/");
+  }else{
+    overlay.classList.remove("show");
+    btn.__open = null;
+  }
+  renderBadge(card);
+}
+function buildCard(ch, idx){
+  seedStore(ch.name);
+  meta[idx] = { solo:false, kind:null, vid:null, url:null, key:null, external:null, status:"off", token:0, attached:false, waitStart:0, attempts:0, fails:0, fallback:false, startTimer:0 };
+  const card = document.createElement("article");
+  card.className = "card";
+  card.style.setProperty("--acc", ch.color || "#37f0c5");
+  card.dataset.idx = idx;
+
+  card.innerHTML = `
+    <div class="head">
+      <span class="name" title="Focus (dublu-click)">${ch.name}</span>
+      <span class="badge">Off air</span>
+      <div class="spacer"></div>
+      <button class="icon-btn solo" title="Solo — auzi doar acest post">◎</button>
+      <button class="icon-btn focus" title="Focus pe acest post">⛶</button>
+      <button class="icon-btn mute" title="Mute">🔇</button>
+      <a class="icon-btn" target="_blank" rel="noopener" title="Deschide sursa"
+         href="${ch.external || ("https://www.youtube.com/channel/" + ch.channelId + "/live")}">↗</a>
+    </div>
+    <div class="video">
+      <div class="overlay show">
+        <div><b>Off air — nu e live acum</b>Se pornește singur când stația iese în emisie.</div>
+        <button class="btn retry" type="button">Sincronizează acum</button>
+      </div>
+    </div>
+    <div class="gauges">
+      <button class="icon-btn" title="Fără sunet">0</button>
+      <input type="range" min="0" max="100" value="0">
+      <span class="pct">%</span>
+    </div>`;
+
+  const vol = card.querySelector('input[type="range"]');
+  const pct = card.querySelector(".pct");
+  const muteBtn = card.querySelector(".mute");
+  const soloBtn = card.querySelector(".solo");
+  const g = store[ch.name];
+
+  vol.value = g.volume;
+  pct.textContent = g.volume + "%";
+  markMuted(card, g.muted);
+
+  card.querySelector(".retry").onclick = () => {
+    const open = card.querySelector(".overlay .btn").__open;
+    if(open) window.open(open, "_blank", "noopener");
+    else syncNow();
+  };
+  soloBtn.onclick = () => {
+    meta[idx].solo = !meta[idx].solo;
+    soloBtn.classList.toggle("solo-on", meta[idx].solo);
+    soloBtn.textContent = meta[idx].solo ? "✕" : "◎";
+    refreshAllAudio();
+    renderBadge(card);
+  };
+  muteBtn.onclick = () => {
+    g.muted = !g.muted; saveStore();
+    refreshAudio(idx);
+    markMuted(card, g.muted);
+    renderBadge(card);
+  };
+  vol.addEventListener("input", () => {
+    const v = +vol.value;
+    g.volume = v;
+    if(v > 0) g.muted = false;
+    saveStore();
+    pct.textContent = v + "%";
+    refreshAudio(idx);
+    markMuted(card, g.muted || v === 0);
+    renderBadge(card);
+  });
+  card.querySelector(".gauges .icon-btn").onclick = () => {
+    vol.value = 0; pct.textContent = "0%";
+    g.volume = 0; saveStore();
+    refreshAudio(idx);
+    markMuted(card, true);
+    renderBadge(card);
+  };
+  card.querySelector(".focus").onclick = () => focusCard(idx);
+  card.querySelector(".name").ondblclick = () => focusCard(idx);
+
+  grid.appendChild(card);
+}
+function effectiveMuted(idx){
+  const g = store[CHANNELS[idx].name];
+  if(g.muted || g.volume === 0) return true;
+  if(anySolo() && !meta[idx].solo) return true;
+  return false;
+}
+function refreshAudio(idx){
+  const p = players.get(idx);
+  if(!p) return;
+  const g = store[CHANNELS[idx].name];
+  try{
+    if(effectiveMuted(idx)) p.mute();
+    else { p.unMute(); p.setVolume(masterScaled(+masterEl.value, g.volume)); }
+  }catch(e){}
+}
+function refreshAllAudio(){
+  for(let i = 0; i < CHANNELS.length; i++) refreshAudio(i);
+}
+
+function focusCard(idx){
+  const card = grid.children[idx];
+  const wasFocused = card.classList.contains("focused");
+  document.body.classList.remove("focusing");
+  for(const c of grid.children){ c.classList.remove("dimmed"); c.classList.remove("focused"); }
+  document.getElementById("unfocus").hidden = true;
+  if(!wasFocused){
+    card.classList.add("focused");
+    document.body.classList.add("focusing");
+    for(const c of grid.children){ if(c !== card) c.classList.add("dimmed"); }
+    document.getElementById("unfocus").hidden = false;
+  }
+}
+
+function teardown(idx){
+  const m = meta[idx];
+  if(m){
+    m.token++; m.attached = false; m.fallback = false;
+    if(m.startTimer){ clearTimeout(m.startTimer); m.startTimer = 0; }
+  }
+  const p = players.get(idx);
+  if(p){ try{ p.destroy(); }catch(e){} players.delete(idx); }
+  const card = grid.children[idx];
+  if(card){
+    const host = card.querySelector(".video .player-host");
+    if(host) host.remove();
+    const iframe = card.querySelector(".video iframe");
+    if(iframe) iframe.remove();
+    const v = card.querySelector(".video video");
+    if(v) v.remove();
+  }
+}
+
+// player HLS (hls.js) pentru surse luate direct de pe site (Antena 3, România TV…)
+function attachHlsPlayer(idx, url, token){
+  const m = meta[idx];
+  const card = grid.children[idx];
+  const host = card && card.querySelector(".video .player-host");
+  if(!m || !card || !host) return;
+
+  const video = document.createElement("video");
+  video.muted = true;
+  video.autoplay = true;
+  video.controls = true;
+  video.setAttribute("playsinline", "");
+  video.setAttribute("webkit-playsinline", "");
+  host.appendChild(video);
+
+  const adapter = {
+    kind: "hls",
+    video,
+    hls: null,
+    mute(){ try{ video.muted = true; }catch(e){} },
+    unMute(){ try{ video.muted = false; }catch(e){} },
+    setVolume(v){ try{ video.volume = Math.max(0, Math.min(1, v / 100)); }catch(e){} },
+    destroy(){
+      try{ if(adapter.hls){ adapter.hls.destroy(); adapter.hls = null; } }catch(e){}
+      try{ video.pause(); video.removeAttribute("src"); video.load(); }catch(e){}
+      try{ video.remove(); }catch(e){}
+    }
+  };
+  players.set(idx, adapter);
+  refreshAudio(idx);
+
+  const die = (why) => {
+    const mm = meta[idx];
+    if(token !== mm.token) return;
+    if(mm.startTimer){ clearTimeout(mm.startTimer); mm.startTimer = 0; }
+    dbgLog(idx, "hlsError", why);
+    mm.fails = (mm.fails || 0) + 1;
+    setChannelState(idx, "unavailable");
+    scheduleRetry(idx);
+  };
+
+  video.addEventListener("playing", () => {
+    const mm = meta[idx];
+    if(token !== mm.token) return;
+    mm.attempts = 0; mm.fails = 0;
+    if(mm.startTimer){ clearTimeout(mm.startTimer); mm.startTimer = 0; }
+    setChannelState(idx, "live");
+  });
+  video.addEventListener("error", () => die("video-error"));
+
+  if(window.Hls && window.Hls.isSupported()){
+    const hls = new window.Hls({ liveSyncDurationCount: 3, manifestLoadingMaxRetry: 4, fragLoadingMaxRetry: 6 });
+    adapter.hls = hls;
+    hls.attachMedia(video);
+    hls.on(window.Hls.Events.MEDIA_ATTACHED, () => {
+      try{ hls.loadSource(url); }catch(e){ die("loadSource:" + e); }
+    });
+    hls.on(window.Hls.Events.MANIFEST_PARSED, () => { try{ video.play().catch(()=>{}); }catch(e){} });
+    hls.on(window.Hls.Events.ERROR, (_ev, data) => {
+      if(!data || !data.fatal) return;
+      dbgLog(idx, "hlsFatal", data.type + ":" + data.details);
+      if(data.type === window.Hls.ErrorTypes.MEDIA_ERROR){
+        try{ hls.recoverMediaError(); return; }catch(e){}
+      }
+      die(data.type + ":" + data.details);
+    });
+  }else if(video.canPlayType("application/vnd.apple.mpegurl")){
+    video.src = url;
+    video.addEventListener("loadedmetadata", () => { try{ video.play().catch(()=>{}); }catch(e){} });
+  }else{
+    die("no-hls-support");
+    return;
+  }
+
+  if(m.startTimer) clearTimeout(m.startTimer);
+  m.startTimer = setTimeout(() => {
+    const mm = meta[idx];
+    if(token !== mm.token || mm.status === "live") return;
+    dbgLog(idx, "hlsStartTimeout", null);
+    mm.fails = (mm.fails || 0) + 1;
+    setChannelState(idx, "unavailable");
+    scheduleRetry(idx);
+  }, START_TIMEOUT_MS);
+}
+
+function attachPlayer(idx){
+  const m = meta[idx];
+  const card = grid.children[idx];
+  const host = card && card.querySelector(".video .player-host");
+  if(!m || !card || !host || m.attached || (!m.vid && !m.url)) return;
+  m.attached = true;
+  const token = m.token;
+  const ch = CHANNELS[idx];
+
+  if(m.kind === "hls"){ attachHlsPlayer(idx, m.url, token); return; }
+
+  const videoId = m.vid;
+
+  const events = {
+    onReady: (e) => {
+      if(token !== meta[idx].token) return;
+      dbgLog(idx, "ready", null);
+      const p = e.target;
+      players.set(idx, p);
+      try{
+        p.mute();
+        p.playVideo();
+      }catch(err){ dbgLog(idx, "playError", String(err)); }
+      refreshAudio(idx);
+      // watchdog: dacă nu ajunge în "playing" (buffer/-1 în buclă), trecem pe link extern
+      if(m.startTimer) clearTimeout(m.startTimer);
+      m.startTimer = setTimeout(() => {
+        const mm = meta[idx];
+        if(token !== mm.token || mm.status === "live") return;
+        dbgLog(idx, "startTimeout", null);
+        mm.fails = (mm.fails || 0) + 1;
+        setChannelState(idx, "unavailable");
+        scheduleRetry(idx);
+      }, START_TIMEOUT_MS);
+    },
+    onStateChange: (ev) => {
+      if(token !== meta[idx].token) return;
+      dbgLog(idx, "state", ev.data);
+      if(ev.data === 1){          // playing
+        const mm = meta[idx];
+        mm.attempts = 0;
+        mm.fails = 0;
+        if(mm.startTimer){ clearTimeout(mm.startTimer); mm.startTimer = 0; }
+        setChannelState(idx, "live");
+      }else if(ev.data === -1){   // ended — poate fi tranzitoriu (DVR) → grace period
+        scheduleRecovery(idx);
+      }
+    },
+    onError: (ev) => {
+      if(token !== meta[idx].token) return;
+      dbgLog(idx, "error", ev.data);
+      if(ev.data === 101 || ev.data === 150 || ev.data === 153){
+        if(!m.fallback && ch.channelId){
+          // owner-ul blochează embed-ul pe video → reîncearcă o dată cu live_stream-ul canalului
+          dbgLog(idx, "fallback", ch.channelId);
+          m.attempts = 0;
+          m.fallback = true;
+          spawn(idx);
+        }else{
+          // blocat definitiv → oferim link extern
+          m.fails = (m.fails || 0) + 1;
+          setChannelState(idx, "blocked");
+          scheduleRetry(idx);
+        }
+      }else if([2, 5, 100].indexOf(ev.data) !== -1){
+        streamGone(idx);
+      }
+    }
+  };
+
+  if(m.fallback){
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture; fullscreen");
+    iframe.setAttribute("allowfullscreen", "");
+    iframe.setAttribute("frameborder", "0");
+    iframe.src = "https://www.youtube.com/embed/live_stream?channel=" + ch.channelId +
+      "&enablejsapi=1&autoplay=1&mute=1&playsinline=1&controls=1&modestbranding=1&rel=0";
+    host.appendChild(iframe);
+    new YT.Player(iframe, { events });
+    return;
+  }
+
+  new YT.Player(host, {
+    videoId: videoId,
+    width: "100%",
+    height: "100%",
+    playerVars: { playsinline: 1, controls: 1, modestbranding: 1, rel: 0, enablejsapi: 1 },
+    events
+  });
+}
+
+function scheduleRecovery(idx){
+  // stream "ended": așteptăm 20s; dacă nu pornește, respawn.
+  // După 2 eșecuri consecutive → considerăm că embed-ul nu merge (blocat) și oferim link extern.
+  const m = meta[idx];
+  if(!m || m.status === "live" || (m.fails || 0) >= MAX_FAILS) return;
+  setChannelState(idx, "waiting");
+  const prev = recoveryTimers.get(idx);
+  if(prev) clearTimeout(prev);
+  recoveryTimers.set(idx, setTimeout(() => {
+    const mm = meta[idx];
+    if(!mm || !mm.key || mm.status === "live") return;
+    mm.attempts = (mm.attempts || 0) + 1;
+    if(mm.attempts >= 2){
+      mm.fails = (mm.fails || 0) + 1;
+      setChannelState(idx, "unavailable");
+      scheduleRetry(idx);
+    }else{
+      spawn(idx);
+    }
+  }, 20000));
+}
+
+function streamGone(idx){
+  // stream-ul a terminat sau e indisponibil → marcam off + reîncercăm curând
+  setChannelState(idx, "off");
+  scheduleRetry(idx);
+}
+
+function scheduleRetry(idx){
+  const prev = retryTimers.get(idx);
+  if(prev) clearTimeout(prev);
+  retryTimers.set(idx, setTimeout(() => { syncNow(); }, RECHECK_MS));
+}
+
+function sourceKey(src){
+  return src.type + ":" + (src.videoId || src.url || "");
+}
+
+function applySource(m, src){
+  m.kind = src.type;
+  m.vid = src.videoId || null;
+  m.url = src.url || null;
+  m.key = sourceKey(src);
+  m.external = src.external || m.external || null;
+}
+
+function normalizeSource(item){
+  if(!item || !item.live) return null;
+  if(item.type === "hls" && item.src){
+    const url = item.proxy ? ("api/hls?u=" + encodeURIComponent(item.src)) : item.src;
+    return { type: "hls", url, external: item.external || item.src };
+  }
+  if(item.videoId){
+    return { type: "youtube", videoId: item.videoId, external: item.external || ("https://www.youtube.com/watch?v=" + item.videoId) };
+  }
+  return null;
+}
+
+function spawn(idx){
+  const m = meta[idx];
+  const card = grid.children[idx];
+  if(!m || !card || (!m.vid && !m.url)) return;
+  teardown(idx);
+  m.waitStart = Date.now();
+  setChannelState(idx, "waiting");
+  const overlay = card.querySelector(".overlay");
+  const vbox = card.querySelector(".video");
+  const host = document.createElement("div");
+  host.className = "player-host";
+  vbox.insertBefore(host, overlay);
+  if(m.kind === "hls" || apiReady) attachPlayer(idx);
+}
+
+function attachIfPending(){
+  if(!apiReady) return;
+  for(let idx = 0; idx < CHANNELS.length; idx++){
+    const m = meta[idx];
+    if(m && m.key && m.kind !== "hls" && !m.attached) attachPlayer(idx);
+  }
+}
+
+// restart player dacă a stat blocat în "waiting" prea mult
+setInterval(() => {
+  for(let idx = 0; idx < CHANNELS.length; idx++){
+    const m = meta[idx];
+    if(m && m.key && m.status === "waiting" && (m.fails || 0) < MAX_FAILS && (Date.now() - m.waitStart) > STUCK_MS){
+      m.fails = (m.fails || 0) + 1;
+      spawn(idx);
+    }
+  }
+}, 5000);
+
+async function fetchSource(){
+  try{
+    const t = await fetch("api/live?t=" + Date.now());
+    if(t.ok){
+      const j = await t.json();
+      if(j && j.length) return { mode: "live", list: j };
+    }
+  }catch(e){}
+  try{
+    const t = await fetch("channels.baked.json?t=" + Date.now());
+    if(t.ok){
+      const j = await t.json();
+      if(j && j.length) return { mode: "static", list: j };
+    }
+  }catch(e){}
+  return { mode: "none", list: [] };
+}
+
+function toMap(list){
+  const map = {};
+  for(const item of list) map[item.id] = item;
+  return map;
+}
+
+async function syncNow(){
+  try{
+    const { mode, list } = await fetchSource();
+    const map = toMap(list);
+    let liveCount = 0;
+    CHANNELS.forEach((ch, idx) => {
+      const item = map[ch.id];
+      const src = normalizeSource(item);
+      const m = meta[idx];
+      if(src){
+        liveCount++;
+        if(sourceKey(src) !== m.key){
+          m.attempts = 0;
+          m.fails = 0;
+          m.fallback = false;
+          applySource(m, src);
+          spawn(idx);
+        }else if((m.status === "unavailable" || m.status === "blocked") && (m.fails || 0) < MAX_FAILS){
+          // dăm o șansă în plus (poate a început emisia / s-a deblocat)
+          m.attempts = 0;
+          spawn(idx);
+        }
+      }else{
+        if(m.key){ m.attempts = 0; m.kind = null; m.vid = null; m.url = null; m.key = null; teardown(idx); setChannelState(idx, "off"); }
+        else setChannelState(idx, "off");
+      }
+    });
+    const time = new Date().toTimeString().slice(0, 8);
+    syncChip.innerHTML = mode === "live"
+      ? "sincronizare <b>" + liveCount + "/" + CHANNELS.length + "</b> live · " + time
+      : mode === "static"
+        ? "mod static — rulează <b>node server.mjs</b> pentru live"
+        : "fără server — rulează <b>node server.mjs</b>";
+  }catch(e){
+    syncChip.textContent = "eroare sincronizare";
+  }
+}
+function applyCols(n){
+  grid.style.setProperty("--cols", n);
+  grid.style.setProperty("--rows", Math.ceil(CHANNELS.length / n));
+}
+
+document.getElementById("cols").addEventListener("change", (e) => {
+  applyCols(e.target.value);
+});
+masterEl.addEventListener("input", () => {
+  masterPct.textContent = masterEl.value + "%";
+  refreshAllAudio();
+});
+document.getElementById("unmuteAll").onclick = () => {
+  for(let i = 0; i < CHANNELS.length; i++){
+    const g = store[CHANNELS[i].name];
+    g.muted = false; saveStore();
+    refreshAudio(i);
+    markMuted(grid.children[i], false);
+    renderBadge(grid.children[i]);
+  }
+};
+document.getElementById("muteAll").onclick = () => {
+  for(let i = 0; i < CHANNELS.length; i++){
+    const g = store[CHANNELS[i].name];
+    g.muted = true; saveStore();
+    refreshAudio(i);
+    markMuted(grid.children[i], true);
+    renderBadge(grid.children[i]);
+  }
+};
+document.getElementById("unfocus").onclick = () => {
+  document.body.classList.remove("focusing");
+  for(const c of grid.children){ c.classList.remove("dimmed"); c.classList.remove("focused"); }
+  document.getElementById("unfocus").hidden = true;
+};
+window.addEventListener("keydown", (e) => {
+  if(e.key === "Escape") document.getElementById("unfocus").click();
+});
+
+window.onYouTubeIframeAPIReady = function(){
+  apiReady = true;
+  attachIfPending();
+};
+
+function loadYTAPI(){
+  if(window.YT && window.YT.Player) return;
+  const tag = document.createElement("script");
+  tag.src = "https://www.youtube.com/iframe_api";
+  document.head.appendChild(tag);
+}
+
+function loadHlsFallback(){
+  if(window.Hls) return;
+  const tag = document.createElement("script");
+  tag.src = "https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js";
+  document.head.appendChild(tag);
+}
+
+// init
+CHANNELS.forEach(buildCard);
+applyCols(document.getElementById("cols").value);
+loadHlsFallback();
+syncNow();
+setInterval(syncNow, POLL_MS);
+loadYTAPI();
+</script>
+</body>
+</html>

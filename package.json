@@ -1,0 +1,15 @@
+{
+  "name": "romania_news_live",
+  "version": "1.0.0",
+  "description": "Știri Live România — toate posturile TV pe o singură pagină",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test:page": "node _page_test.cjs"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "puppeteer-core": "^25.11.0"
+  }
+}

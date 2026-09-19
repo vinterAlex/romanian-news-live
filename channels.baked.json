@@ -1,0 +1,86 @@
+[
+  {
+    "id": "digi24",
+    "name": "Digi24",
+    "channelId": "UCBvKamSrJkwT6ed2BMMZXwg",
+    "handle": "@digi24hd56",
+    "live": false,
+    "type": null,
+    "videoId": null,
+    "src": null,
+    "proxy": false,
+    "external": "https://www.youtube.com/@digi24hd56/live"
+  },
+  {
+    "id": "antena3",
+    "name": "Antena 3 CNN",
+    "channelId": null,
+    "handle": null,
+    "live": true,
+    "type": "hls",
+    "videoId": null,
+    "src": "https://ivm.antenaplay.ro/live/a3free/playlist.m3u8?version=1&session=134ec17cb2fcb2bd47a5&free=1&starttime=1789852624&endtime=1789867054&source=a3web&token=iMuIe4mr2LbEOSrMLMEEWGFw9V4=",
+    "proxy": true,
+    "external": "https://www.antena3.ro/live"
+  },
+  {
+    "id": "euronews",
+    "name": "Euronews România",
+    "channelId": "UCbATDExtWstHnwWELZnXNZA",
+    "handle": "@euronewsro",
+    "live": true,
+    "type": "youtube",
+    "videoId": "XNcx7TFm6zg",
+    "src": null,
+    "proxy": false,
+    "external": "https://www.youtube.com/@euronewsro/live"
+  },
+  {
+    "id": "protv",
+    "name": "Stirile ProTV",
+    "channelId": "UCEJf5cGtkBdZS8Jh2uSW9xw",
+    "handle": "@stirileprotv",
+    "live": false,
+    "type": null,
+    "videoId": null,
+    "src": null,
+    "proxy": false,
+    "external": "https://www.youtube.com/@stirileprotv/live"
+  },
+  {
+    "id": "romaniatv",
+    "name": "Romania TV",
+    "channelId": null,
+    "handle": null,
+    "live": true,
+    "type": "hls",
+    "videoId": null,
+    "src": "https://livestream.romaniatv.net/clients/romaniatv/playlist.m3u8",
+    "proxy": true,
+    "external": "https://www.romaniatv.net/live"
+  },
+  {
+    "id": "aleph",
+    "name": "Aleph News",
+    "channelId": "UC9OlWHkFGBz08r7OXwqx3Sg",
+    "handle": "@alephnewsofficial",
+    "live": true,
+    "type": "youtube",
+    "videoId": "CYshMs27MUE",
+    "src": null,
+    "proxy": false,
+    "external": "https://www.youtube.com/@alephnewsofficial/live"
+  },
+  {
+    "id": "realitatea",
+    "name": "Realitatea Plus",
+    "channelId": null,
+    "handle": null,
+    "live": true,
+    "type": "youtube",
+    "videoId": "EYK--w9nLjI",
+    "src": null,
+    "proxy": false,
+    "external": "https://www.realitatea.net/live"
+  }
+]
