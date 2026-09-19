@@ -4,10 +4,20 @@ Toate posturile de știri (Digi24, Antena 3 CNN, Euronews România, Știrile Pro
 
 ## Rulare
 
-```bash
-node server.mjs
-# → http://localhost:8765
-```
+1. Deschide un terminal (PowerShell / CMD) și intră în folderul unde ai clonat repo-ul:
+
+   ```bash
+   cd romania_news_live
+   ```
+
+2. Pornește serverul:
+
+   ```bash
+   node server.mjs
+   # → http://localhost:8765
+   ```
+
+Deschide apoi `http://localhost:8765` în browser.
 
 Fără server, pagina merge în mod static (folosește `channels.baked.json`), dar fără detectare live în timp real. Posturile cu stream HLS (Antena 3, România TV) au nevoie de server pentru proxy-ul `/api/hls`.
 
